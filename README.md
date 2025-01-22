@@ -1,2 +1,3 @@
 # geo-proximity-calculator
-Given two sets of latitude/longitude pairs, this module finds the closest point in the second set for every point in the first set.
+
+Mission of the module:  If the user gives you two arrays of geo location, match each point in the first array to the closest one in the second array.
