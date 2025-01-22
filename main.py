@@ -23,12 +23,12 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     distance_km = distance / 1000
     return distance_km
 
-def find_closest_point(ref_lat, ref_lon, array_of_coords):
+def find_closest_point(temp_lat, temp_lon, array_of_coords):
     min_distance = None
     closest_point = None
     
     for (lat, lon) in array_of_coords:
-        dist = haversine_distance(ref_lat, ref_lon, lat, lon)
+        dist = haversine_distance(temp_lat, temp_lon, lat, lon)
         if min_distance is None or dist < min_distance:
             min_distance = dist
             closest_point = (lat, lon)
