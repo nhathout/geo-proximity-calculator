@@ -1,5 +1,6 @@
 import math
 
+# function to calculate Haversine distance between to geo locations
 def haversine_distance(lat1, lon1, lat2, lon2):
     R = 6371e3  # Earth radius in meters
     
@@ -23,6 +24,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     distance_km = distance / 1000
     return distance_km
 
+# function to find closest point in an array of points to a reference point
 def find_closest_point(temp_lat, temp_lon, array_of_coords):
     min_distance = None
     closest_point = None
