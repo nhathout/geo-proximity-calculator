@@ -2,6 +2,15 @@
 
 **Mission of the module:**  If the user gives you two arrays of geo location, match each point in the first array to the closest one in the second array.
 
+## Getting Started:
+
+1. Clone & Enter the Repository:<br>
+```git clone https://github.com/nhathout/geo-proximity-calculator.git```<br>
+```cd geo-proximity-calculator```
+
+2. Run the program:<br>
+```python3 main.py```
+
 ## Solution Design:
 
 1. **haversine_distance(lat1, lon1, lat2, lon2)**
