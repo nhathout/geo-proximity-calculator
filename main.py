@@ -48,31 +48,46 @@ def pair_arrays(array1, array2):
 
     return matched_pairs
 
+# function to continuously ask user for a float until a float is entered.
+# if min_val and/or max_val inputted, also checks that value is in specified range.
+def get_valid_input(prompt, min_val=None, max_val=None):
+    while True:
+        user_input = input(prompt).strip()
+
+        try:
+            val = float(user_input)
+            if (min_val is not None and val < min_val) or (max_val is not None and val > max_val):
+                print(f"Error: value {val} out of range. Must be between {min_val} and {max_val}.")
+                continue
+            return val
+        except ValueError:
+            print(f"Error: '{user_input}' is not a valid float. Please try again.")
+
 if __name__ == "__main__":
     # prompt user for the FIRST array
-    num_points_1 = int(input("How many geo locations are in your FIRST array? "))
+    num_points_1 = get_valid_input("How many geo locations are in your FIRST array? ", min_val=1)
+    num_points_1 = int(num_points_1)  # safe to convert to int after validation
+    
     array1 = []
     for i in range(num_points_1):
-        lat = float(input(f"Enter latitude of geo location #{i+1} in FIRST array: "))
-        lon = float(input(f"Enter longitude of geo location #{i+1} in FIRST array: "))
-        
+        lat = get_valid_input(f"Enter latitude of geo location #{i+1} in FIRST array: ", min_val=-90, max_val=90)
+        lon = get_valid_input(f"Enter longitude of geo location #{i+1} in FIRST array: ", min_val=-180, max_val=180)
         array1.append((lat, lon))
     
     # prompt user for the SECOND array
-    num_points_2 = int(input("How many geo locations are in your SECOND array? "))
+    num_points_2 = get_valid_input("How many geo locations are in your SECOND array? ", min_val=1)
+    num_points_2 = int(num_points_2)
+    
     array2 = []
     for i in range(num_points_2):
-        lat = float(input(f"Enter latitude of geo location #{i+1} in SECOND array: "))
-        lon = float(input(f"Enter longitude of geo location #{i+1} in SECOND array: "))
-        
+        lat = get_valid_input(f"Enter latitude of geo location #{i+1} in SECOND array: ", min_val=-90, max_val=90)
+        lon = get_valid_input(f"Enter longitude of geo location #{i+1} in SECOND array: ", min_val=-180, max_val=180)
         array2.append((lat, lon))
 
-    # match array1 points to their closest points in array2
     results = pair_arrays(array1, array2)
 
-    # print results
     print("\nResults:")
     for i, ((lat1, lon1), (closest_lat, closest_lon), dist) in enumerate(results, start=1):
         print(f"  - geo location #{i} in FIRST array ({lat1}, {lon1}) "
-              f"is closest to ({closest_lat}, {closest_lon}) in SECOND array "
+              f"is closest to ({closest_lat}, {closest_lon}) "
               f"with a distance of {dist:.2f} km.")
