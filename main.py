@@ -85,7 +85,7 @@ def get_point(is_lat=True):
     label = "latitude" if is_lat else "longitude"
 
     while True:
-        choice = input(f"Do you want to enter {label} in decimal (d) or DMS (dm)? [d/dm]: ").strip().lower()
+        choice = input(f"Do you want to enter {label} in decimal (d) or Degrees Minutes Seconds (dm)? [d/dm]: ").strip().lower()
         if choice == "d":
             # decimal
             d_min, d_max = (-90, 90) if is_lat else (-180, 180)
