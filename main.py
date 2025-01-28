@@ -150,7 +150,7 @@ def load_points_csv(label):
         for row in reader:
             lat, lon = None, None
             
-            # Find latitude
+            # find latitude
             for col in possible_lat_cols:
                 if col in row and row[col].strip():
                     parsed = parse_coordinate(row[col])
@@ -158,7 +158,7 @@ def load_points_csv(label):
                         lat = parsed
                         break
             
-            # Find longitude
+            # find longitude
             for col in possible_lon_cols:
                 if col in row and row[col].strip():
                     parsed = parse_coordinate(row[col])
