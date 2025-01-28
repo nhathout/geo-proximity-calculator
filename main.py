@@ -172,7 +172,7 @@ def load_points_csv(label):
                 print(f"Skipping row (invalid lat/lon): {row}")
     return coords
 
-if __name__ == "__main__":
+def main():
     print("=== First Array ===")
     choice_1 = input("Enter 'csv' to load from file, or 'manual' to input manually: ").strip().lower()
     if choice_1 == "csv":
@@ -197,3 +197,6 @@ if __name__ == "__main__":
             print(f"  - geo location #{i} in FIRST array ({lat1}, {lon1}) "
                   f"is closest to ({closest_lat}, {closest_lon}) "
                   f"with a distance of {dist:.2f} km.")
+            
+if __name__ == "__main__":
+    main()
