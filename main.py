@@ -1,6 +1,7 @@
 import math
 import csv
 import os
+import re
 
 # function to calculate Haversine distance between to geo locations
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -108,6 +109,31 @@ def get_points_manually(label):
         arr.append((lat, lon))
     return arr
 
+# function that parses a CSV input (like "33.8688° S" or "40.7128° N") into a float
+def parse_coordinate(value):
+    
+    cleaned = re.sub(r'[^0-9a-zA-Z\.\-]', '', value)
+    
+    # get direction (last letter if present)
+    direction = None
+    if len(cleaned) > 0 and cleaned[-1].upper() in ['N', 'S', 'E', 'W']:
+        direction = cleaned[-1].upper()
+        numeric_part = cleaned[:-1]
+    else:
+        numeric_part = cleaned
+    
+    try:
+        coord = float(numeric_part)
+    except ValueError:
+        return None
+    
+    if direction in ['S', 'W']:
+        coord = -abs(coord)
+    elif direction in ['N', 'E']:
+        coord = abs(coord)
+    
+    return coord
+
 # function to prompt user for CSV file path, try to read lat/lon columns and return a list of (lat, lon) tuples
 def load_points_csv(label):
     filepath = input(f"Enter the path to the CSV file for your {label} array: ").strip()
@@ -118,37 +144,32 @@ def load_points_csv(label):
     coords = []
     with open(filepath, "r", newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        # We can accept multiple possible column names for lat/lon
-        possible_lat_cols = ["latitude", "lat"]
-        possible_lon_cols = ["longitude", "lon"]
+        possible_lat_cols = ["latitude", "lat", "Latitude"]
+        possible_lon_cols = ["longitude", "lon", "Longitude"]
         
         for row in reader:
             lat, lon = None, None
             
-            # Try to find latitude in the row
+            # Find latitude
             for col in possible_lat_cols:
                 if col in row and row[col].strip():
-                    try:
-                        lat = float(row[col])
+                    parsed = parse_coordinate(row[col])
+                    if parsed is not None:
+                        lat = parsed
                         break
-                    except ValueError:
-                        pass
             
-            # Try to find longitude in the row
+            # Find longitude
             for col in possible_lon_cols:
                 if col in row and row[col].strip():
-                    try:
-                        lon = float(row[col])
+                    parsed = parse_coordinate(row[col])
+                    if parsed is not None:
+                        lon = parsed
                         break
-                    except ValueError:
-                        pass
             
-            # If we found both, add them
             if lat is not None and lon is not None:
                 coords.append((lat, lon))
             else:
-                # Skip this row if it doesn't have valid lat/lon
-                print(f"Skipping row (missing lat/lon): {row}")
+                print(f"Skipping row (invalid lat/lon): {row}")
     return coords
 
 if __name__ == "__main__":
