@@ -14,8 +14,8 @@
 ```python main.py``` or ```python3 main.py```
 
 4. Follow the on-screen prompts:
-    -- Decide how to load the FIRST array (CSV or manually)
-    -- Decide how to load the SECOND array (CSV or manually)
+ - Decide how to load the FIRST array (CSV or manually)
+ - Decide how to load the SECOND array (CSV or manually)
 
 5. To enter latitude and longitude from a CSV:<br>
 Ensure the repository is correctly cloned onto your machine. Paste any CSV into ```csv_testing/``` directory for simplicity. Then copy & paste the full path into the command line after prompting the program that you will be using CSV data. (copy & pasting without putting the CSV file into ```csv_testing/``` should also work)
