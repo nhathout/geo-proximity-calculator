@@ -11,6 +11,9 @@
 2. Run the program:<br>
 ```python3 main.py```
 
+3. To enter latitude and longitude from a CSV:<br>
+Ensure the repository is correctly cloned onto your machine. Paste any CSV into ```csv_testing/``` directory for simplicity. Then copy & paste the full path into the command line after prompting the program that you will be using CSV data. (copy & pasting without putting the CSV file into ```csv_testing/``` should also work)
+
 ## Solution Design:
 
 1. **haversine_distance(lat1, lon1, lat2, lon2)**
