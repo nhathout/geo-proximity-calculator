@@ -1,4 +1,7 @@
 import math
+import csv
+import os
+import re
 
 # function to calculate Haversine distance between to geo locations
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -95,33 +98,102 @@ def get_point(is_lat=True):
         else:
             print("Invalid choice. Type 'd' or 'dm'.")
 
+# function to constantly prompt users for lat/lon (decimal or DMS)
+def get_points_manually(label):
+    num_points = int(get_valid_input(f"How many geo locations are in your {label} array? ", min_val=1))
+    arr = []
+    for i in range(num_points):
+        print(f"\n{label} array: Enter coordinates for point #{i+1}.")
+        lat = get_point(is_lat=True)
+        lon = get_point(is_lat=False)
+        arr.append((lat, lon))
+    return arr
+
+# function that parses a CSV input (like "33.8688° S" or "40.7128° N") into a float
+def parse_coordinate(value):
+    
+    cleaned = re.sub(r'[^0-9a-zA-Z\.\-]', '', value)
+    
+    # get direction (last letter if present)
+    direction = None
+    if len(cleaned) > 0 and cleaned[-1].upper() in ['N', 'S', 'E', 'W']:
+        direction = cleaned[-1].upper()
+        numeric_part = cleaned[:-1]
+    else:
+        numeric_part = cleaned
+    
+    try:
+        coord = float(numeric_part)
+    except ValueError:
+        return None
+    
+    if direction in ['S', 'W']:
+        coord = -abs(coord)
+    elif direction in ['N', 'E']:
+        coord = abs(coord)
+    
+    return coord
+
+# function to prompt user for CSV file path, try to read lat/lon columns and return a list of (lat, lon) tuples
+def load_points_csv(label):
+    filepath = input(f"Enter the path to the CSV file for your {label} array: ").strip()
+    if not os.path.exists(filepath):
+        print(f"Error: File '{filepath}' not found.")
+        return []
+
+    coords = []
+    with open(filepath, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        possible_lat_cols = ["latitude", "lat", "Latitude"]
+        possible_lon_cols = ["longitude", "lon", "Longitude"]
+        
+        for row in reader:
+            lat, lon = None, None
+            
+            # find latitude
+            for col in possible_lat_cols:
+                if col in row and row[col].strip():
+                    parsed = parse_coordinate(row[col])
+                    if parsed is not None:
+                        lat = parsed
+                        break
+            
+            # find longitude
+            for col in possible_lon_cols:
+                if col in row and row[col].strip():
+                    parsed = parse_coordinate(row[col])
+                    if parsed is not None:
+                        lon = parsed
+                        break
+            
+            if lat is not None and lon is not None:
+                coords.append((lat, lon))
+            else:
+                print(f"Skipping row (invalid lat/lon): {row}")
+    return coords
+
 if __name__ == "__main__":
-    # prompt user for the FIRST array
-    num_points_1 = get_valid_input("How many geo locations are in your FIRST array? ", min_val=1)
-    num_points_1 = int(num_points_1)
+    print("=== First Array ===")
+    choice_1 = input("Enter 'csv' to load from file, or 'manual' to input manually: ").strip().lower()
+    if choice_1 == "csv":
+        array1 = load_points_csv("FIRST")
+    else:
+        array1 = get_points_manually("FIRST")
     
-    array1 = []
-    for i in range(num_points_1):
-        print(f"\nFIRST array: Enter coordinates for point #{i+1}.")
-        lat = get_point(is_lat=True)
-        lon = get_point(is_lat=False)
-        array1.append((lat, lon))
-    
-    # prompt user for the SECOND array
-    num_points_2 = get_valid_input("How many geo locations are in your SECOND array? ", min_val=1)
-    num_points_2 = int(num_points_2)
-    
-    array2 = []
-    for i in range(num_points_2):
-        print(f"\nSECOND array: Enter points for point #{i+1}.")
-        lat = get_point(is_lat=True)
-        lon = get_point(is_lat=False)
-        array2.append((lat, lon))
+    print("\n=== Second Array ===")
+    choice_2 = input("Enter 'csv' to load from file, or 'manual' to input manually: ").strip().lower()
+    if choice_2 == "csv":
+        array2 = load_points_csv("SECOND")
+    else:
+        array2 = get_points_manually("SECOND")
 
-    results = pair_arrays(array1, array2)
+    if not array1 or not array2:
+        print("\nError: One of the arrays is empty. Exiting.")
+    else:
+        results = pair_arrays(array1, array2)
 
-    print("\nResults:")
-    for i, ((lat1, lon1), (closest_lat, closest_lon), dist) in enumerate(results, start=1):
-        print(f"  - geo location #{i} in FIRST array ({lat1}, {lon1}) "
-              f"is closest to ({closest_lat}, {closest_lon}) "
-              f"with a distance of {dist:.2f} km.")
+        print("\nResults:")
+        for i, ((lat1, lon1), (closest_lat, closest_lon), dist) in enumerate(results, start=1):
+            print(f"  - geo location #{i} in FIRST array ({lat1}, {lon1}) "
+                  f"is closest to ({closest_lat}, {closest_lon}) "
+                  f"with a distance of {dist:.2f} km.")
