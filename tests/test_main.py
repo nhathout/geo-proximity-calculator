@@ -6,6 +6,7 @@ from main import (
     load_points_csv
 )
 
+# ChatGPT-aided test cases
 class TestGeoCalculations(unittest.TestCase):
     def test_haversine_distance(self):
         """
