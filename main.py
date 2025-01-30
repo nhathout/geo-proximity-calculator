@@ -9,7 +9,7 @@ import pstats
 
 # setup logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)  # can change to DEBUG, WARNING, etc.
+logger.setLevel(logging.INFO)  # can change to NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # to handle console messages
 ch = logging.StreamHandler()

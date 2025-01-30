@@ -62,3 +62,11 @@ Ensure the repository is correctly cloned onto your machine. Paste any CSV into 
    - Attempts to parse columns named `"latitude"`, `"lat"`, `"Latitude"` (for lat) and `"longitude"`, `"lon"`, `"Longitude"` (for lon).  
    - Uses `parse_coordinate` to handle N/S/E/W or plain decimals.  
    - Returns a list of `(lat, lon)` tuples, skipping any rows it can’t parse.
+
+## Logging Documentation
+
+This project uses Python’s built-in logging in `main.py`. By default, the logger is set to `INFO` level:
+
+```logger.setLevel(logging.INFO)```
+
+You can change the level of logging in `main.py` to `NOTSET`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` to tune the amount of logging detail you would like outputted to your console.
