@@ -2,9 +2,29 @@ import math
 import csv
 import os
 import re
+import logging
+import tracemalloc
+import cProfile
+import pstats
+
+# setup logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # can change to DEBUG, WARNING, etc.
+
+# to handle console messages
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(name)s - %(message)s')
+ch.setFormatter(formatter)
+
+# dont duplicate if logger is re-imported
+if not logger.handlers:
+    logger.addHandler(ch)
 
 # function to calculate Haversine distance between to geo locations
 def haversine_distance(lat1, lon1, lat2, lon2):
+    logger.debug(f"Calculating Haversine distance between ({lat1}, {lon1}) and ({lat2}, {lon2})")
+
     R = 6371e3  # Earth radius in meters
     
     # Convert lat/long from degrees to radians
@@ -25,10 +45,13 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
     # Distance in km from m
     distance_km = distance / 1000
+    logger.debug(f"Distance (km): {distance_km:.4f}")
     return distance_km
 
 # function to find closest point in an array of points to a reference point
 def find_closest_point(temp_lat, temp_lon, array_of_coords):
+    logger.debug(f"Finding closest point to ({temp_lat}, {temp_lon}) among {len(array_of_coords)} points.")
+
     min_distance = None
     closest_point = None
     
@@ -37,12 +60,15 @@ def find_closest_point(temp_lat, temp_lon, array_of_coords):
         if min_distance is None or dist < min_distance:
             min_distance = dist
             closest_point = (lat, lon)
-    
+
+    logger.debug(f"Closest point is {closest_point} at distance {min_distance:.4f} km.")
     return closest_point, min_distance
 
 # function that, for each (lat, lon) in array1, it finds the closest point in array2
 # returns: [((lat1, lon1), closestLat, closestLon), distanceInKm), ( same for point 2 )]
 def pair_arrays(array1, array2):
+    logger.info(f"Pairing {len(array1)} points from array1 with their closest in array2 ({len(array2)} points).")
+
     matched_pairs = []
 
     for (lat1, lon1) in array1:
@@ -56,14 +82,19 @@ def pair_arrays(array1, array2):
 def get_valid_input(prompt, min_val=None, max_val=None):
     while True:
         user_input = input(prompt).strip()
+        logger.debug(f"User input received: {user_input}")
 
         try:
             val = float(user_input)
             if (min_val is not None and val < min_val) or (max_val is not None and val > max_val):
+                logger.warning(f"Value {val} out of range: must be between {min_val} and {max_val}.")
+
                 print(f"Error: value {val} out of range. Must be between {min_val} and {max_val}.")
                 continue
             return val
         except ValueError:
+            logger.warning(f"Invalid float input: '{user_input}'")
+
             print(f"Error: '{user_input}' is not a valid float. Please try again.")
 
 # function to prompt user for degrees, mins, secs, for either lat or lon
@@ -82,6 +113,7 @@ def get_dms(is_lat=True):
     sign = 1 if d >= 0 else -1
     d_abs = abs(d)
     decimal_degrees = sign * (d_abs + m/60 + s/3600)
+    logger.debug(f"Computed DMS -> {decimal_degrees} ({label})")
     return decimal_degrees
 
 def get_point(is_lat=True):
@@ -89,13 +121,14 @@ def get_point(is_lat=True):
 
     while True:
         choice = input(f"Do you want to enter {label} in decimal (d) or Degrees Minutes Seconds (dm)? [d/dm]: ").strip().lower()
+        logger.debug(f"User chose format {choice} for {label}")
         if choice == "d":
-            # decimal
             d_min, d_max = (-90, 90) if is_lat else (-180, 180)
             return get_valid_input(f"Enter {label} in decimal degrees: ", d_min, d_max)
         elif choice == "dm":
             return get_dms(is_lat=is_lat)
         else:
+            logger.warning(f"Invalid choice for {label}: {choice}")
             print("Invalid choice. Type 'd' or 'dm'.")
 
 # function to constantly prompt users for lat/lon (decimal or DMS)
@@ -103,15 +136,19 @@ def get_points_manually(label):
     num_points = int(get_valid_input(f"How many geo locations are in your {label} array? ", min_val=1))
     arr = []
     for i in range(num_points):
+        logger.info(f"{label} array: Enter coordinates for point #{i+1}.")
+
         print(f"\n{label} array: Enter coordinates for point #{i+1}.")
         lat = get_point(is_lat=True)
         lon = get_point(is_lat=False)
         arr.append((lat, lon))
+    logger.info(f"Collected {len(arr)} points for {label} array.")
     return arr
 
 # function that parses a CSV input (like "33.8688° S" or "40.7128° N") into a float
 def parse_coordinate(value):
-    
+    logger.debug(f"Parsing coordinate: {value}")
+
     cleaned = re.sub(r'[^0-9a-zA-Z\.\-]', '', value)
     
     # get direction (last letter if present)
@@ -125,6 +162,8 @@ def parse_coordinate(value):
     try:
         coord = float(numeric_part)
     except ValueError:
+        logger.warning(f"Could not parse numeric part from: {value}")
+
         return None
     
     if direction in ['S', 'W']:
@@ -137,7 +176,11 @@ def parse_coordinate(value):
 # function to prompt user for CSV file path, try to read lat/lon columns and return a list of (lat, lon) tuples
 def load_points_csv(label):
     filepath = input(f"Enter the path to the CSV file for your {label} array: ").strip()
+    logger.info(f"Attempting to load CSV from: {filepath}")
+
     if not os.path.exists(filepath):
+        logger.error(f"File not found: {filepath}")
+
         print(f"Error: File '{filepath}' not found.")
         return []
 
@@ -169,10 +212,14 @@ def load_points_csv(label):
             if lat is not None and lon is not None:
                 coords.append((lat, lon))
             else:
+                logger.warning(f"Skipping row (invalid lat/lon): {row}")
                 print(f"Skipping row (invalid lat/lon): {row}")
+    logger.info(f"Loaded {len(coords)} valid coordinates from CSV.")    
     return coords
 
 def main():
+    logger.info("=== Starting main program ===")
+
     print("=== First Array ===")
     choice_1 = input("Enter 'csv' to load from file, or 'manual' to input manually: ").strip().lower()
     if choice_1 == "csv":
@@ -188,15 +235,51 @@ def main():
         array2 = get_points_manually("SECOND")
 
     if not array1 or not array2:
+        logger.warning("One of the arrays is empty. Exiting early.")
         print("\nError: One of the arrays is empty. Exiting.")
     else:
         results = pair_arrays(array1, array2)
-
         print("\nResults:")
         for i, ((lat1, lon1), (closest_lat, closest_lon), dist) in enumerate(results, start=1):
-            print(f"  - geo location #{i} in FIRST array ({lat1}, {lon1}) "
-                  f"is closest to ({closest_lat}, {closest_lon}) "
-                  f"with a distance of {dist:.2f} km.")
-            
+            msg = (f"  - geo location #{i} in FIRST array ({lat1}, {lon1}) "
+                   f"is closest to ({closest_lat}, {closest_lon}) "
+                   f"with a distance of {dist:.2f} km.")
+            logger.info(msg)
+            print(msg)
+
+    logger.info("=== Main program done ===")
+
+# running the program without tracemalloc & cprofile         
+# if __name__ == "__main__":
+#     main()
+
+# running program with tracemalloc & cprofile
 if __name__ == "__main__":
-    main()
+    # Start memory profiling
+    logger.info("Starting tracemalloc (memory profiler).")
+    tracemalloc.start()
+
+    # CPU profiling with cProfile
+    logger.info("Starting CPU profiling with cProfile.")
+    profiler = cProfile.Profile()
+    profiler.enable()
+
+    # Run main
+    try:
+        main()
+    finally:
+        # Stop CPU profiling
+        profiler.disable()
+        stats = pstats.Stats(profiler).sort_stats(pstats.SortKey.TIME)
+        logger.info("CPU Profiling Results (top 20):")
+        stats.print_stats(20)
+
+        # Snap memory usage
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        logger.info("Memory Profiling Top 10 Lines:")
+        for stat in top_stats[:10]:
+            logger.info(stat)
+
+        tracemalloc.stop()
+        logger.info("Finished all profiling.")
